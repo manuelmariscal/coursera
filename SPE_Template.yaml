@@ -1,0 +1,36 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: This template creates a cross account Support role for the MSP area. Name Stack-iNBestCloud-MSP-SupportPartnerEngineer-Role
+Parameters:
+  MasterAccountNumberiNBestCloud:
+    Description: The 12 digit AWS account number to grant access to.
+    MaxLength: "12"
+    MinLength: "12"
+    Type: String
+    Default: 430439839595
+Resources:
+  #### Support Partner Engineer Role
+  SupportPartnerEngineer:
+    Properties:
+      RoleName: SupportPartnerEngineer
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              AWS:
+                - !Sub "arn:aws:sts::${MasterAccountNumberiNBestCloud}:assumed-role/AWSReservedSSO_AdministratorAccess_a700c30667b49468/Raul"
+                - !Sub "arn:aws:sts::${MasterAccountNumberiNBestCloud}:assumed-role/AWSReservedSSO_AdministratorAccess_a700c30667b49468/Luis-Alberto"
+                - !Sub "arn:aws:sts::${MasterAccountNumberiNBestCloud}:assumed-role/AWSReservedSSO_AdministratorAccess_a700c30667b49468/Javier"
+                - !Sub "arn:aws:sts::${MasterAccountNumberiNBestCloud}:assumed-role/AWSReservedSSO_AdministratorAccess_a700c30667b49468/Julieta"
+                - !Sub "arn:aws:sts::${MasterAccountNumberiNBestCloud}:assumed-role/AWSReservedSSO_AdministratorAccess_a700c30667b49468/Leonardo"
+                - !Sub "arn:aws:sts::${MasterAccountNumberiNBestCloud}:assumed-role/AWSReservedSSO_AdministratorAccess_a700c30667b49468/Ivan"
+                - !Sub "arn:aws:sts::${MasterAccountNumberiNBestCloud}:assumed-role/AWSReservedSSO_AdministratorAccess_a700c30667b49468/Victor-Manuel"
+                - !Sub "arn:aws:sts::${MasterAccountNumberiNBestCloud}:assumed-role/AWSReservedSSO_AdministratorAccess_a700c30667b49468/Diego-Alejandro"
+
+            Sid: ""
+        Version: "2012-10-17"
+      Path: "/"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AdministratorAccess"
+    Type: AWS::IAM::Role

@@ -1,0 +1,84 @@
+.medical-record-container {
+  padding: 20px 0;
+}
+
+.medical-record-card {
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.medical-record-card .card-header {
+  background-color: #1e7c62;
+  color: white;
+  padding: 15px;
+}
+
+.patient-photo-container-large {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+.patient-photo-large {
+  width: 200px;
+  height: 200px;
+  border-radius: 10px;
+  border: 4px solid #1e7c62;
+  object-fit: cover;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.qr-code {
+  max-width: 180px;
+  border: 1px solid #ddd;
+  padding: 10px;
+  background-color: white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.patient-name {
+  color: #1e7c62;
+  font-size: 1.8rem;
+  margin-bottom: 5px;
+}
+
+.patient-id {
+  color: #666;
+  font-size: 1rem;
+  margin-bottom: 20px;
+}
+
+.info-card {
+  margin-bottom: 15px;
+  border: 1px solid #e0e0e0;
+}
+
+.info-header {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  padding: 10px 15px;
+  color: #1e7c62;
+}
+
+.data-value {
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.blood-type {
+  font-weight: bold;
+  font-size: 1.4rem;
+  color: #d9534f;
+}
+
+@media (max-width: 768px) {
+  .patient-photo-large {
+    width: 150px;
+    height: 150px;
+  }
+  
+  .qr-code {
+    max-width: 140px;
+  }
+} 

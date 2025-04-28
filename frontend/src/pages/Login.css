@@ -1,0 +1,22 @@
+.login-container {
+  margin-top: 80px;
+  margin-bottom: 40px;
+}
+
+.login-card {
+  border: none;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.login-header {
+  background-color: #1e7c62;
+  color: white;
+  padding: 20px;
+}
+
+.login-header h2 {
+  margin: 0;
+  font-size: 1.8rem;
+} 

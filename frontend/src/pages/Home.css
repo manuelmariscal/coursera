@@ -1,0 +1,121 @@
+.home-container {
+  padding: 20px 0;
+}
+
+.hero-section {
+  text-align: center;
+  padding: 60px 20px;
+  background-color: #1e7c62;
+  color: white;
+  border-radius: 10px;
+  margin-bottom: 40px;
+}
+
+.hero-subtitle {
+  font-size: 1.2rem;
+  margin-bottom: 30px;
+}
+
+.cta-button {
+  background-color: #ffffff;
+  color: #1e7c62;
+  border: none;
+  padding: 12px 30px;
+  font-size: 1.1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  display: inline-block;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.cta-button:hover {
+  background-color: #f2f2f2;
+  text-decoration: none;
+  color: #1e7c62;
+}
+
+.stats-section {
+  margin: 40px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.stat-card {
+  background-color: white;
+  border-radius: 10px;
+  padding: 30px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  width: 300px;
+  border-top: 4px solid #1e7c62;
+}
+
+.stat-value {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #1e7c62;
+  margin: 15px 0;
+}
+
+.stat-link {
+  color: #1e7c62;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s;
+}
+
+.stat-link:hover {
+  color: #16614d;
+  text-decoration: underline;
+}
+
+.features-section {
+  padding: 40px 0;
+  text-align: center;
+}
+
+.features-section h2 {
+  margin-bottom: 40px;
+  color: #1e7c62;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+  margin-top: 30px;
+}
+
+.feature-card {
+  background: white;
+  border-radius: 10px;
+  padding: 30px 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
+  height: 100%;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.feature-icon {
+  font-size: 3rem;
+  margin-bottom: 20px;
+}
+
+.feature-card h3 {
+  margin-bottom: 15px;
+  color: #1e7c62;
+}
+
+.api-status {
+  margin-top: 40px;
+  padding: 20px;
+  background-color: #f0f0f0;
+  border-radius: 10px;
+  text-align: center;
+} 
