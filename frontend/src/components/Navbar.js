@@ -48,7 +48,7 @@ const Navbar = () => {
                   <>
                     <NavDropdown.Divider />
                     <NavDropdown.Item as={Link} to="/admin/fichas">
-                      Panel de Administración
+                      Administración
                     </NavDropdown.Item>
                   </>
                 )}

@@ -48,7 +48,7 @@ const Contact = () => {
     <div className="contact-container">
       <div className="contact-header">
         <h1>Contacto</h1>
-        <p className="contact-subtitle">¿Tiene alguna pregunta? Estamos aquí para ayudar.</p>
+        <p className="contact-subtitle">¿Tiene preguntas sobre nuestro sistema de fichas médicas? Estamos aquí para ayudar.</p>
       </div>
 
       <div className="contact-content">
@@ -57,21 +57,28 @@ const Contact = () => {
             <div className="info-icon">📍</div>
             <div className="info-text">
               <h3>Dirección</h3>
-              <p>Av. Tecnológica 123, Ciudad Innovación</p>
+              <p>Av. Salud 123, Distrito Médico Central</p>
             </div>
           </div>
           <div className="info-item">
             <div className="info-icon">📞</div>
             <div className="info-text">
               <h3>Teléfono</h3>
-              <p>+123 456 7890</p>
+              <p>+57 300 123 4567</p>
             </div>
           </div>
           <div className="info-item">
             <div className="info-icon">✉️</div>
             <div className="info-text">
               <h3>Email</h3>
-              <p>contacto@motosegura.com</p>
+              <p>soporte@motosegura.com</p>
+            </div>
+          </div>
+          <div className="info-item">
+            <div className="info-icon">🏥</div>
+            <div className="info-text">
+              <h3>Emergencias</h3>
+              <p>Línea 24/7: +57 300 765 4321</p>
             </div>
           </div>
         </div>

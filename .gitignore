@@ -2,6 +2,11 @@
 venv/
 env/
 .env/
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # Python
 __pycache__/
@@ -24,13 +29,73 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+.pytest_cache/
+coverage/
+htmlcov/
+.coverage
+.coverage.*
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.npm
+.yarn
+
+# React / Frontend
+/frontend/build/
+/frontend/node_modules/
+/frontend/.env.local
+/frontend/.env.development.local
+/frontend/.env.test.local
+/frontend/.env.production.local
+/frontend/.cache/
+/frontend/coverage/
+.eslintcache
 
 # IDE
 .idea/
 .vscode/
 *.swp
 *.swo
+*.sublime-project
+*.sublime-workspace
 
 # OS
 .DS_Store
-Thumbs.db 
+Thumbs.db
+
+# Uploads y archivos de medios
+/uploads/
+/backend/uploads/
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.pdf
+*.zip
+*.tar.gz
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Archivos de configuración local
+config.local.js
+*.local.json
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Otros
+.directory
+*.bak
+*.tmp
+*.temp 
