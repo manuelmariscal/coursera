@@ -122,7 +122,7 @@ const MedicalRecord = () => {
             <Col md={4} className="text-center mb-4">
               <div className="patient-photo-container-large">
                 <Image 
-                  src={photoPreview || (ficha.foto_url === 'default.jpg' 
+                  src={photoPreview || (ficha.foto_url === 'default.png' 
                     ? '/default-profile.png' 
                     : `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}/uploads/${ficha.foto_url}`)} 
                   alt="Foto del paciente" 

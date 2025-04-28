@@ -17,15 +17,15 @@ def create_app():
     app.logger.setLevel(logging.INFO)
     
     # Load configuration from environment variables
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://postgres:postgres@db:5432/motosegura')
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///motosegura.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default-secret-key')
     
     # Configurar directorios de uploads
     # Directorio persistente para almacenamiento a largo plazo
-    app.config['PERSISTENT_UPLOAD_FOLDER'] = os.getenv('PERSISTENT_UPLOAD_FOLDER', '/data/motosegura/uploads')
+    app.config['PERSISTENT_UPLOAD_FOLDER'] = os.getenv('PERSISTENT_UPLOAD_FOLDER', 'uploads')
     # Directorio de aplicación para acceso web
-    app.config['UPLOAD_FOLDER'] = os.getenv('UPLOAD_FOLDER', '/app/static/uploads')
+    app.config['UPLOAD_FOLDER'] = os.getenv('UPLOAD_FOLDER', 'uploads')
     
     app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_CONTENT_LENGTH', 16 * 1024 * 1024))  # 16MB
     
