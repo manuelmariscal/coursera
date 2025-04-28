@@ -12,61 +12,139 @@ import qrcode
 from io import BytesIO
 from PIL import Image
 from functools import wraps
-try:
-    import jwt
-except ImportError:
-    import PyJWT as jwt
+import jwt
 from flask import Flask, jsonify, request, abort, render_template, send_file
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
-# Configuración de rate limiter
+# Database configuration
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URI', 'sqlite:///motosegura.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+# Función para obtener la IP real del cliente considerando proxies
+def get_real_ip():
+    # Primero intentamos obtener la IP de X-Forwarded-For
+    forwarded_for = request.headers.get('X-Forwarded-For')
+    if forwarded_for:
+        # X-Forwarded-For puede contener múltiples IPs, tomamos la primera (cliente original)
+        return forwarded_for.split(',')[0].strip()
+    
+    # Si no hay X-Forwarded-For, intentamos con X-Real-IP
+    real_ip = request.headers.get('X-Real-IP')
+    if real_ip:
+        return real_ip
+    
+    # Si no hay headers de proxy, usamos la IP remota
+    return request.remote_addr
+
+# Configuración de rate limiter con límite global más estricto
 limiter = Limiter(
     app=app,
-    key_func=get_remote_address,
-    default_limits=["200 per day", "50 per hour"]
+    key_func=get_real_ip,  # Usar la función personalizada para obtener la IP real
+    default_limits=["10 per minute"],  # Límite global de 10 solicitudes por minuto por IP
+    storage_uri=os.environ.get('REDIS_URL', 'memory://'),  # Usar Redis si está disponible, memoria en caso contrario
+    strategy="fixed-window"  # Estrategia de ventana fija para el conteo
 )
 
-# Secret key para JWT
-JWT_SECRET = "motosegura-jwt-secret-2023"
-JWT_EXPIRATION_HOURS = 24
+# Secret key para JWT - from environment variables
+JWT_SECRET = os.environ.get('JWT_SECRET', 'dev-jwt-secret')
+JWT_EXPIRATION_HOURS = int(os.environ.get('JWT_EXPIRATION_HOURS', '24'))
 
-# API Key para operaciones privilegiadas - en un sistema real, esto estaría en una base de datos
-API_KEY = "motosegura-api-key-2023"
+# API Key para operaciones privilegiadas - from environment variables
+API_KEY = os.environ.get('API_KEY', 'dev-api-key')
 
-# Directorio para guardar fotos
-UPLOAD_FOLDER = 'uploads'
+# Directorio para guardar fotos - usar una ubicación persistente
+UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', 'uploads')
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Base de datos en memoria para usuarios
-users = [
-    {
-        "id": 1,
-        "username": "admin",
-        "password": "admin123",
-        "name": "Administrador",
-        "email": "admin@motosegura.com",
-        "role": "admin",
-        "phone": "+57 3123456789",
-        "address": "Calle Principal #123, Bogotá"
-    },
-    {
-        "id": 2,
-        "username": "user",
-        "password": "user123",
-        "name": "Usuario Estándar",
-        "email": "user@motosegura.com",
-        "role": "user",
-        "phone": "+57 3198765432",
-        "address": "Avenida Central #456, Medellín"
-    }
-]
+# Database Models
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password = db.Column(db.String(120), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    role = db.Column(db.String(20), nullable=False, default='user')
+    phone = db.Column(db.String(20), nullable=True)
+    address = db.Column(db.String(200), nullable=True)
+    
+    def to_dict(self, exclude_password=True):
+        data = {
+            'id': self.id,
+            'username': self.username,
+            'name': self.name,
+            'email': self.email,
+            'role': self.role,
+            'phone': self.phone,
+            'address': self.address
+        }
+        if not exclude_password:
+            data['password'] = self.password
+        return data
+
+class FichaMedica(db.Model):
+    id = db.Column(db.String(10), primary_key=True)
+    nombre = db.Column(db.String(100), nullable=False)
+    apellido = db.Column(db.String(100), nullable=False)
+    tipo_sangre = db.Column(db.String(10), nullable=False)
+    contacto_emergencia = db.Column(db.String(100), nullable=False)
+    numero_contacto = db.Column(db.String(20), nullable=False)
+    alergias = db.Column(db.String(200), nullable=True)
+    medicaciones = db.Column(db.String(200), nullable=True)
+    foto_url = db.Column(db.String(200), nullable=True, default='default.jpg')
+    fecha_registro = db.Column(db.String(10), nullable=False)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'nombre': self.nombre,
+            'apellido': self.apellido,
+            'tipo_sangre': self.tipo_sangre,
+            'contacto_emergencia': self.contacto_emergencia,
+            'numero_contacto': self.numero_contacto,
+            'alergias': self.alergias,
+            'medicaciones': self.medicaciones,
+            'foto_url': self.foto_url,
+            'fecha_registro': self.fecha_registro
+        }
+
+class UserRecord(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    record_id = db.Column(db.String(10), db.ForeignKey('ficha_medica.id'), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default='Active')
+    created_at = db.Column(db.String(10), nullable=False)
+    
+    user = db.relationship('User', backref=db.backref('records', lazy=True))
+    ficha = db.relationship('FichaMedica', backref=db.backref('user_records', lazy=True))
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'record_id': self.record_id,
+            'status': self.status,
+            'created_at': self.created_at
+        }
+
+# Initialize database
+def init_db():
+    with app.app_context():
+        # Create all tables if they don't exist
+        db.create_all()
 
 # Decorador para verificar token JWT
 def token_required(f):
@@ -86,7 +164,7 @@ def token_required(f):
         try:
             # Decodificar el token
             data = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
-            current_user = next((user for user in users if user["id"] == data["user_id"]), None)
+            current_user = User.query.get(data["user_id"])
             
             if not current_user:
                 return jsonify({'message': 'Usuario no válido'}), 401
@@ -99,86 +177,6 @@ def token_required(f):
         return f(current_user, *args, **kwargs)
     
     return decorated
-
-# Base de datos en memoria para almacenar fichas médicas
-fichas_medicas = [
-    {
-        "id": "ABC123",
-        "nombre": "Juan",
-        "apellido": "Pérez",
-        "tipo_sangre": "O+",
-        "contacto_emergencia": "María Pérez",
-        "numero_contacto": "+57 3123456789",
-        "alergias": "Penicilina",
-        "medicaciones": "Ninguna",
-        "foto_url": "default.jpg",
-        "fecha_registro": "2023-01-15"
-    },
-    {
-        "id": "XYZ789",
-        "nombre": "María",
-        "apellido": "López",
-        "tipo_sangre": "A-",
-        "contacto_emergencia": "Carlos López",
-        "numero_contacto": "+57 3198765432",
-        "alergias": "Ninguna",
-        "medicaciones": "Insulina",
-        "foto_url": "default.jpg",
-        "fecha_registro": "2023-02-20"
-    }
-]
-
-# Base de datos en memoria para motos registradas por usuario
-user_motorcycles = [
-    {
-        "id": 1,
-        "user_id": 1,
-        "marca": "Yamaha",
-        "modelo": "MT-09",
-        "anio": 2022,
-        "matricula": "ABC123",
-        "color": "Negro",
-        "fecha_registro": "2023-01-10"
-    },
-    {
-        "id": 2,
-        "user_id": 2,
-        "marca": "Honda",
-        "modelo": "CBR 500",
-        "anio": 2021,
-        "matricula": "XYZ789",
-        "color": "Rojo",
-        "fecha_registro": "2023-02-15"
-    },
-    {
-        "id": 3,
-        "user_id": 1,
-        "marca": "Suzuki",
-        "modelo": "GSX-R750",
-        "anio": 2023,
-        "matricula": "DEF456",
-        "color": "Azul",
-        "fecha_registro": "2023-03-20"
-    }
-]
-
-# Base de datos en memoria para fichas médicas asignadas a usuarios
-user_records = [
-    {
-        "id": 1,
-        "user_id": 1,
-        "record_id": "ABC123",
-        "status": "Active",
-        "created_at": "2023-01-20"
-    },
-    {
-        "id": 2,
-        "user_id": 2,
-        "record_id": "XYZ789",
-        "status": "Active",
-        "created_at": "2023-02-25"
-    }
-]
 
 def generar_id_unico():
     """Genera un ID único alfanumérico de 6 caracteres"""
@@ -193,7 +191,7 @@ def verificar_api_key():
 
 # Endpoints de autenticación
 @app.route('/api/auth/login', methods=['POST'])
-@limiter.limit("5 per minute")
+@limiter.limit("5 per minute")  # Más restrictivo para prevenir ataques de fuerza bruta
 def login():
     """Endpoint para iniciar sesión"""
     data = request.json
@@ -204,45 +202,36 @@ def login():
     username = data.get('username')
     password = data.get('password')
     
-    user = next((user for user in users if user["username"] == username and user["password"] == password), None)
+    user = User.query.filter_by(username=username).first()
     
-    if not user:
+    if not user or user.password != password:  # En una aplicación real, usar verificación de hash
         return jsonify({'message': 'Credenciales inválidas'}), 401
     
     # Generar token JWT
     token_payload = {
-        'user_id': user['id'],
+        'user_id': user.id,
         'exp': datetime.utcnow() + timedelta(hours=JWT_EXPIRATION_HOURS)
     }
     
     token = jwt.encode(token_payload, JWT_SECRET, algorithm="HS256")
     
-    # Crear copia del usuario sin la contraseña
-    user_data = {k: v for k, v in user.items() if k != 'password'}
-    
     return jsonify({
         'message': 'Inicio de sesión exitoso',
         'token': token,
-        'user': user_data
+        'user': user.to_dict()
     })
 
 @app.route('/api/auth/me', methods=['GET'])
 @token_required
 def get_user_info(current_user):
     """Obtener información del usuario autenticado"""
-    # Crear copia del usuario sin la contraseña
-    user_data = {k: v for k, v in current_user.items() if k != 'password'}
-    
-    return jsonify(user_data)
+    return jsonify(current_user.to_dict())
 
 @app.route('/api/users/profile', methods=['GET'])
 @token_required
 def get_user_profile(current_user):
     """Obtener perfil completo del usuario"""
-    # Crear copia del usuario sin la contraseña
-    profile_data = {k: v for k, v in current_user.items() if k != 'password'}
-    
-    return jsonify(profile_data)
+    return jsonify(current_user.to_dict())
 
 @app.route('/api/users/profile', methods=['PUT'])
 @token_required
@@ -256,45 +245,31 @@ def update_user_profile(current_user):
     # Actualizar los campos permitidos
     for key, value in data.items():
         if key not in restricted_fields:
-            current_user[key] = value
+            setattr(current_user, key, value)
     
-    # Crear copia del usuario sin la contraseña
-    profile_data = {k: v for k, v in current_user.items() if k != 'password'}
+    db.session.commit()
     
     return jsonify({
         'message': 'Perfil actualizado con éxito',
-        'user': profile_data
+        'user': current_user.to_dict()
     })
-
-@app.route('/api/motorcycles/user', methods=['GET'])
-@token_required
-def get_user_motorcycles(current_user):
-    """Obtener motocicletas del usuario"""
-    user_id = current_user['id']
-    motorcycles = [moto for moto in user_motorcycles if moto['user_id'] == user_id]
-    
-    return jsonify(motorcycles)
 
 @app.route('/api/records/user', methods=['GET'])
 @token_required
 def get_user_records(current_user):
     """Obtener fichas médicas del usuario"""
-    user_id = current_user['id']
+    user_record_items = UserRecord.query.filter_by(user_id=current_user.id).all()
+    
     records = []
-    
-    # Obtener IDs de fichas asignadas al usuario
-    user_record_ids = [record for record in user_records if record['user_id'] == user_id]
-    
-    # Obtener detalles completos de cada ficha
-    for user_record in user_record_ids:
-        ficha = next((f for f in fichas_medicas if f['id'] == user_record['record_id']), None)
+    for user_record in user_record_items:
+        ficha = FichaMedica.query.get(user_record.record_id)
         if ficha:
             record_data = {
-                'id': ficha['id'],
-                'nombre': ficha['nombre'],
-                'apellido': ficha['apellido'],
-                'status': user_record['status'],
-                'created_at': user_record['created_at']
+                'id': ficha.id,
+                'nombre': ficha.nombre,
+                'apellido': ficha.apellido,
+                'status': user_record.status,
+                'created_at': user_record.created_at
             }
             records.append(record_data)
     
@@ -310,18 +285,19 @@ def health():
     return jsonify({"status": "healthy"})
 
 @app.route('/api/fichas', methods=['GET'])
-@limiter.limit("30 per minute")
+@limiter.limit("10 per minute")  # Límite estándar para consultas generales
 def get_fichas():
     """Obtener todas las fichas médicas."""
-    return jsonify({"status": "success", "fichas": fichas_medicas})
+    fichas = FichaMedica.query.all()
+    return jsonify({"status": "success", "fichas": [ficha.to_dict() for ficha in fichas]})
 
 @app.route('/api/fichas/<ficha_id>', methods=['GET'])
-@limiter.limit("60 per minute")
+@limiter.limit("15 per minute")  # Un poco más permisivo para consultas individuales
 def get_ficha(ficha_id):
     """Obtener una ficha médica por ID."""
-    ficha = next((f for f in fichas_medicas if f["id"] == ficha_id), None)
+    ficha = FichaMedica.query.get(ficha_id)
     if ficha:
-        return jsonify({"status": "success", "ficha": ficha})
+        return jsonify({"status": "success", "ficha": ficha.to_dict()})
     else:
         abort(404, description="Ficha médica no encontrada")
 
@@ -339,33 +315,35 @@ def add_ficha():
     
     # Generar ID único
     nuevo_id = generar_id_unico()
-    while next((f for f in fichas_medicas if f["id"] == nuevo_id), None):
+    while FichaMedica.query.get(nuevo_id):
         nuevo_id = generar_id_unico()  # Regenerar si existe
     
     # Crear nueva ficha médica
-    nueva_ficha = {
-        "id": nuevo_id,
-        "nombre": data.get('nombre'),
-        "apellido": data.get('apellido'),
-        "tipo_sangre": data.get('tipo_sangre'),
-        "contacto_emergencia": data.get('contacto_emergencia'),
-        "numero_contacto": data.get('numero_contacto'),
-        "alergias": data.get('alergias', 'Ninguna'),
-        "medicaciones": data.get('medicaciones', 'Ninguna'),
-        "foto_url": "default.jpg",
-        "fecha_registro": time.strftime('%Y-%m-%d')
-    }
+    nueva_ficha = FichaMedica(
+        id=nuevo_id,
+        nombre=data.get('nombre'),
+        apellido=data.get('apellido'),
+        tipo_sangre=data.get('tipo_sangre'),
+        contacto_emergencia=data.get('contacto_emergencia'),
+        numero_contacto=data.get('numero_contacto'),
+        alergias=data.get('alergias', 'Ninguna'),
+        medicaciones=data.get('medicaciones', 'Ninguna'),
+        foto_url="default.jpg",
+        fecha_registro=time.strftime('%Y-%m-%d')
+    )
     
-    fichas_medicas.append(nueva_ficha)
+    db.session.add(nueva_ficha)
+    db.session.commit()
+    
     return jsonify({
         "status": "success", 
         "message": "Ficha médica registrada con éxito", 
-        "ficha": nueva_ficha,
+        "ficha": nueva_ficha.to_dict(),
         "qr_url": f"/api/qr/{nuevo_id}"
     }), 201
 
 @app.route('/api/fichas/<ficha_id>', methods=['PUT'])
-@limiter.limit("10 per minute")
+@limiter.limit("5 per minute")  # Más restrictivo para actualizaciones
 def update_ficha(ficha_id):
     """Actualizar una ficha médica existente (requiere API key)."""
     try:
@@ -377,65 +355,67 @@ def update_ficha(ficha_id):
         else:
             abort(403, description="API key requerida para modificar la ficha médica")
     
-    ficha_index = next((i for i, f in enumerate(fichas_medicas) if f["id"] == ficha_id), None)
+    ficha = FichaMedica.query.get(ficha_id)
     
-    if ficha_index is None:
+    if not ficha:
         abort(404, description="Ficha médica no encontrada")
     
     data = request.json
-    ficha = fichas_medicas[ficha_index]
     
     # Actualizar campos
     for key, value in data.items():
-        if key in ficha and key != 'id' and key != 'fecha_registro':  # No permitir cambiar ciertos campos
-            ficha[key] = value
+        if key != 'id' and key != 'fecha_registro':  # No permitir cambiar ciertos campos
+            setattr(ficha, key, value)
     
-    return jsonify({"status": "success", "message": "Ficha médica actualizada con éxito", "ficha": ficha})
+    db.session.commit()
+    
+    return jsonify({"status": "success", "message": "Ficha médica actualizada con éxito", "ficha": ficha.to_dict()})
 
 @app.route('/api/fichas/<ficha_id>', methods=['DELETE'])
-@limiter.limit("5 per minute")
+@limiter.limit("3 per minute")  # Muy restrictivo para eliminaciones
 def delete_ficha(ficha_id):
     """Eliminar una ficha médica (requiere API key)."""
     verificar_api_key()
     
-    ficha_index = next((i for i, f in enumerate(fichas_medicas) if f["id"] == ficha_id), None)
+    ficha = FichaMedica.query.get(ficha_id)
     
-    if ficha_index is None:
+    if not ficha:
         abort(404, description="Ficha médica no encontrada")
     
-    deleted_ficha = fichas_medicas.pop(ficha_index)
-    return jsonify({"status": "success", "message": "Ficha médica eliminada con éxito", "ficha": deleted_ficha})
+    ficha_data = ficha.to_dict()
+    
+    # Eliminar registros de usuario asociados
+    UserRecord.query.filter_by(record_id=ficha_id).delete()
+    
+    db.session.delete(ficha)
+    db.session.commit()
+    
+    return jsonify({"status": "success", "message": "Ficha médica eliminada con éxito", "ficha": ficha_data})
 
 @app.route('/api/buscar/fichas', methods=['GET'])
-@limiter.limit("30 per minute")
+@limiter.limit("10 per minute")  # Límite estándar para búsquedas
 def search_fichas():
     """Buscar fichas médicas por nombre o apellido."""
     nombre = request.args.get('nombre', '')
     apellido = request.args.get('apellido', '')
     
-    results = []
+    query = FichaMedica.query
     
     if nombre:
-        results.extend([f for f in fichas_medicas if nombre.lower() in f['nombre'].lower()])
+        query = query.filter(FichaMedica.nombre.ilike(f"%{nombre}%"))
     
     if apellido:
-        results.extend([f for f in fichas_medicas if apellido.lower() in f['apellido'].lower()])
+        query = query.filter(FichaMedica.apellido.ilike(f"%{apellido}%"))
     
-    # Eliminar duplicados
-    unique_results = []
-    unique_ids = set()
-    for ficha in results:
-        if ficha['id'] not in unique_ids:
-            unique_ids.add(ficha['id'])
-            unique_results.append(ficha)
+    fichas = query.all()
     
-    return jsonify({"status": "success", "fichas": unique_results})
+    return jsonify({"status": "success", "fichas": [ficha.to_dict() for ficha in fichas]})
 
 @app.route('/api/qr/<ficha_id>')
 @limiter.limit("60 per minute")
 def generate_qr(ficha_id):
     """Genera un código QR para la ficha médica."""
-    ficha = next((f for f in fichas_medicas if f["id"] == ficha_id), None)
+    ficha = FichaMedica.query.get(ficha_id)
     if not ficha:
         abort(404, description="Ficha médica no encontrada")
     
@@ -462,7 +442,7 @@ def generate_qr(ficha_id):
     return send_file(img_io, mimetype='image/png')
 
 @app.route('/api/upload_photo/<ficha_id>', methods=['POST'])
-@limiter.limit("10 per minute")
+@limiter.limit("5 per minute")  # Restrictivo para subida de archivos
 def upload_photo(ficha_id):
     """Subir foto de perfil para una ficha médica."""
     if 'file' not in request.files:
@@ -472,19 +452,25 @@ def upload_photo(ficha_id):
     if file.filename == '':
         return jsonify({"status": "error", "message": "No se seleccionó ningún archivo"}), 400
     
-    ficha = next((f for f in fichas_medicas if f["id"] == ficha_id), None)
+    ficha = FichaMedica.query.get(ficha_id)
     if not ficha:
         abort(404, description="Ficha médica no encontrada")
     
-    # Guardar archivo
-    filename = f"{ficha_id}_{int(time.time())}.jpg"
+    # Guardar archivo con nombre persistente vinculado al ID de la ficha
+    filename = f"{ficha_id}.jpg"
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(filepath)
     
     # Actualizar la ficha médica con la nueva foto
-    ficha['foto_url'] = filename
+    ficha.foto_url = filename
+    db.session.commit()
     
-    return jsonify({"status": "success", "message": "Foto subida con éxito", "foto_url": filename})
+    return jsonify({
+        "status": "success", 
+        "message": "Foto subida con éxito", 
+        "foto_url": filename,
+        "ficha": ficha.to_dict()
+    })
 
 @app.route('/uploads/<filename>')
 def get_uploaded_file(filename):
@@ -505,7 +491,16 @@ def forbidden(e):
 
 @app.errorhandler(429)
 def ratelimit_handler(e):
-    return jsonify(error=f"Rate limit excedido: {str(e)}"), 429
+    """Manejar excesos de rate limit con un mensaje claro"""
+    ip = get_real_ip()
+    endpoint = request.path
+    return jsonify({
+        "status": "error", 
+        "message": f"Límite de solicitudes excedido. Por favor, espere antes de realizar más solicitudes.",
+        "details": str(e),
+        "endpoint": endpoint,
+        "reset": getattr(e, 'reset_at', None)
+    }), 429
 
 if __name__ == '__main__':
     # Configuración para producción vs desarrollo
@@ -518,5 +513,8 @@ if __name__ == '__main__':
     if not os.path.exists(UPLOAD_DIR):
         os.makedirs(UPLOAD_DIR)
     app.config['UPLOAD_FOLDER'] = UPLOAD_DIR
+    
+    # Inicializar la base de datos antes de ejecutar la aplicación
+    init_db()
     
     app.run(host=HOST, port=PORT, debug=DEBUG_MODE) 

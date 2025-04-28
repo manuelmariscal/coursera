@@ -20,13 +20,21 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://postgres:postgres@db:5432/motosegura')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default-secret-key')
+    
+    # Configurar directorios de uploads
+    # Directorio persistente para almacenamiento a largo plazo
+    app.config['PERSISTENT_UPLOAD_FOLDER'] = os.getenv('PERSISTENT_UPLOAD_FOLDER', '/data/motosegura/uploads')
+    # Directorio de aplicación para acceso web
     app.config['UPLOAD_FOLDER'] = os.getenv('UPLOAD_FOLDER', '/app/static/uploads')
+    
     app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_CONTENT_LENGTH', 16 * 1024 * 1024))  # 16MB
     
     # Initialize extensions
     db.init_app(app)
     migrate = Migrate(app, db)
-    CORS(app)
+    
+    # Configurar CORS para permitir solicitudes desde cualquier origen
+    CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
     
     # Initialize rate limiter
     limiter = Limiter(
@@ -35,9 +43,9 @@ def create_app():
         default_limits=[os.getenv('RATELIMIT_DEFAULT', "200 per day"), "50 per hour"]
     )
     
-    # Create upload folder if it doesn't exist
-    if not os.path.exists(app.config['UPLOAD_FOLDER']):
-        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    # Create upload folders if they don't exist
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    os.makedirs(app.config['PERSISTENT_UPLOAD_FOLDER'], exist_ok=True)
     
     # Create default profile image if it doesn't exist
     default_profile_path = os.path.join(app.config['UPLOAD_FOLDER'], 'default_profile.png')
@@ -49,6 +57,11 @@ def create_app():
             os.makedirs(os.path.dirname(default_profile_path), exist_ok=True)
             img.save(default_profile_path)
             app.logger.info(f"Created default profile image at {default_profile_path}")
+            
+            # Also create a copy in the persistent folder for future use
+            persistent_path = os.path.join(app.config['PERSISTENT_UPLOAD_FOLDER'], 'default_profile.png')
+            img.save(persistent_path)
+            app.logger.info(f"Created persistent default profile image at {persistent_path}")
         except Exception as e:
             app.logger.warning(f"Could not create default profile image: {str(e)}")
     

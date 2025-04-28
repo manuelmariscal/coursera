@@ -86,4 +86,53 @@
 
 .medical-modal-header button.close {
   color: white;
+}
+
+/* Mejora para selección de administrador */
+.admin-select-overlay {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  padding: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  border: 2px solid #007bff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.admin-select-overlay .form-check {
+  margin: 0;
+  padding: 0;
+}
+
+.admin-select-overlay .form-check-input {
+  margin: 0;
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+/* Estilo para tarjetas seleccionadas */
+.medical-card.selected {
+  border: 2px solid #dc3545;
+  box-shadow: 0 0 8px rgba(220, 53, 69, 0.5);
+}
+
+/* Estilos para el componente de rate limit */
+.rate-limit-alert {
+  margin-bottom: 20px;
+  border-left: 5px solid #f0ad4e;
+  background-color: #fffbf0;
+}
+
+.rate-limit-alert .alert-heading {
+  color: #8a6d3b;
+  font-size: 1.2rem;
 } 

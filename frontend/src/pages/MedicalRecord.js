@@ -124,7 +124,7 @@ const MedicalRecord = () => {
                 <Image 
                   src={photoPreview || (ficha.foto_url === 'default.jpg' 
                     ? '/default-profile.png' 
-                    : `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/uploads/${ficha.foto_url}`)} 
+                    : `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}/uploads/${ficha.foto_url}`)} 
                   alt="Foto del paciente" 
                   className="patient-photo-large" 
                   rounded
@@ -204,7 +204,13 @@ const MedicalRecord = () => {
                         </Col>
                         <Col sm={6}>
                           <p><strong>Teléfono:</strong></p>
-                          <p className="data-value">{ficha.numero_contacto}</p>
+                          <p className="data-value">
+                            {ficha.numero_contacto ? 
+                              (ficha.numero_contacto.startsWith('+') ? 
+                                ficha.numero_contacto : 
+                                `+${ficha.numero_contacto}`) 
+                            : ''}
+                          </p>
                         </Col>
                       </Row>
                     </Card.Body>

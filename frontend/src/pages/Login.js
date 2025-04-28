@@ -84,9 +84,7 @@ const Login = () => {
               
               <div className="mt-3 text-center text-muted">
                 <small>
-                  <p>Credenciales de ejemplo:</p>
-                  <p>Admin: admin / admin123</p>
-                  <p>Usuario: user / user123</p>
+                  <p>Solicita tus credenciales al administrador.</p>
                 </small>
               </div>
             </Card.Body>

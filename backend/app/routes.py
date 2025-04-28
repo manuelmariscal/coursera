@@ -1,10 +1,31 @@
-from flask import Blueprint, request, jsonify, send_from_directory, render_template, current_app
+from flask import Blueprint, request, jsonify, send_from_directory, render_template, current_app, url_for, after_this_request
 from .models import db, MedicalRecord
-from .utils import generate_qr_code, require_api_key, save_profile_image
+from .utils import generate_qr_code, require_api_key, save_profile_image, get_persistent_upload_folder
 import os
 from werkzeug.exceptions import BadRequest, NotFound
+import requests
+from flask_cors import cross_origin
 
 main = Blueprint('main', __name__)
+
+# Añadir encabezados CORS a todas las respuestas
+@main.after_request
+def add_cors_headers(response):
+    # Permitir solicitudes desde cualquier origen - siempre usar '*'
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    # Permitir métodos específicos
+    response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+    # Permitir encabezados específicos 
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type, X-API-Key, X-Mobile-Device, Origin')
+    # Permitir cookies (si es necesario)
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    # Configuración de caché para encabezados CORS
+    response.headers.add('Access-Control-Max-Age', '3600')
+    return response
+
+# Determinar si la solicitud proviene de un dispositivo móvil
+def is_mobile_device():
+    return 'X-Mobile-Device' in request.headers
 
 # Frontend routes
 @main.route('/')
@@ -52,11 +73,19 @@ def create_record():
             record.profile_image = save_profile_image(profile_image, record.id)
             db.session.commit()
         
-        qr_code = generate_qr_code(f"http://localhost:5001/record/{record.id}")
+        # Generar la URL para el QR basada en la configuración del backend
+        qr_host = request.headers.get('X-Frontend-Host', request.host_url.rstrip('/'))
+        qr_code_url = f"{qr_host}/record/{record.id}"
+        qr_code = generate_qr_code(qr_code_url)
+        
+        # Crear URL absoluta para la imagen
+        image_url = None
+        if record.profile_image and record.profile_image != 'default_profile.png':
+            image_url = f"{request.host_url.rstrip('/')}/uploads/{record.profile_image}"
         
         return jsonify({
             'message': 'Record created successfully',
-            'record': record.to_dict(),
+            'record': record.to_dict(include_image_url=True),
             'qr_code': qr_code
         }), 201
     except Exception as e:
@@ -70,7 +99,8 @@ def get_record(record_id):
         if not record:
             return jsonify({'error': 'Record not found'}), 404
         
-        return jsonify(record.to_dict())
+        # Incluir URLs absolutas para las imágenes
+        return jsonify(record.to_dict(include_image_url=True))
     except Exception as e:
         current_app.logger.error(f"Error getting record: {str(e)}")
         return jsonify({'error': 'Failed to get record'}), 500
@@ -98,7 +128,7 @@ def update_record(record_id):
             record.profile_image = save_profile_image(profile_image, record.id)
         
         db.session.commit()
-        return jsonify(record.to_dict())
+        return jsonify(record.to_dict(include_image_url=True))
     except Exception as e:
         current_app.logger.error(f"Error updating record: {str(e)}")
         return jsonify({'error': 'Failed to update record'}), 500
@@ -118,9 +148,69 @@ def delete_record(record_id):
         current_app.logger.error(f"Error deleting record: {str(e)}")
         return jsonify({'error': 'Failed to delete record'}), 500
 
+@main.route('/api/fichas', methods=['GET', 'OPTIONS'])
+@cross_origin()
+def get_fichas():
+    # Manejar solicitudes OPTIONS para CORS
+    if request.method == 'OPTIONS':
+        return '', 204
+        
+    try:
+        # Registrar información sobre la solicitud
+        current_app.logger.info(f"Solicitud de fichas desde: {request.remote_addr}, Agente: {request.user_agent}")
+        current_app.logger.info(f"Headers: {request.headers}")
+        
+        # Obtener todos los registros médicos
+        records = MedicalRecord.query.all()
+        
+        # Convertir a JSON incluyendo URLs absolutas para las imágenes
+        fichas = [record.to_dict(include_image_url=True) for record in records]
+        
+        # Verificar si la solicitud proviene de un dispositivo móvil
+        if is_mobile_device():
+            current_app.logger.info(f"Solicitud desde dispositivo móvil, devolviendo {len(fichas)} fichas")
+        
+        response_data = {'status': 'success', 'fichas': fichas}
+        current_app.logger.info(f"Enviando respuesta con {len(fichas)} fichas")
+        
+        return jsonify(response_data)
+    except Exception as e:
+        current_app.logger.error(f"Error getting fichas: {str(e)}")
+        return jsonify({'error': 'Failed to get records', 'details': str(e)}), 500
+
+@main.route('/api/fichas/<ficha_id>', methods=['GET'])
+@cross_origin()
+def get_ficha(ficha_id):
+    try:
+        record = MedicalRecord.query.get(ficha_id)
+        if not record:
+            return jsonify({'error': 'Record not found'}), 404
+        
+        # Incluir URL absoluta para la imagen
+        ficha = record.to_dict(include_image_url=True)
+        
+        return jsonify({'status': 'success', 'ficha': ficha})
+    except Exception as e:
+        current_app.logger.error(f"Error getting ficha: {str(e)}")
+        return jsonify({'error': 'Failed to get record', 'details': str(e)}), 500
+
 @main.route('/uploads/<filename>')
 def uploaded_file(filename):
     try:
+        # Agregar encabezados para caché en dispositivos móviles
+        @after_this_request
+        def add_header(response):
+            response.headers['Cache-Control'] = 'public, max-age=86400'  # 24 horas
+            return response
+            
+        # Primero intentar desde el directorio persistente
+        persistent_folder = get_persistent_upload_folder()
+        persistent_path = os.path.join(persistent_folder, filename)
+        
+        if os.path.exists(persistent_path):
+            return send_from_directory(persistent_folder, filename)
+        
+        # Si no existe en el persistente, intentar desde el directorio de la aplicación
         return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
     except Exception as e:
         current_app.logger.error(f"Error serving file: {str(e)}")
@@ -132,4 +222,22 @@ def static_files(filename):
         return send_from_directory('static', filename)
     except Exception as e:
         current_app.logger.error(f"Error serving static file: {str(e)}")
-        return jsonify({'error': 'Failed to serve static file'}), 500 
+        return jsonify({'error': 'Failed to serve static file'}), 500
+
+@main.route('/health')
+@cross_origin()
+def health_check():
+    # Verificar si la solicitud proviene de un dispositivo móvil
+    is_mobile = is_mobile_device()
+    
+    # URL desde la que se hace la solicitud
+    referer = request.headers.get('Referer', 'Unknown')
+    
+    return jsonify({
+        'status': 'ok', 
+        'message': 'API running normally',
+        'is_mobile': is_mobile,
+        'referer': referer,
+        'remote_addr': request.remote_addr,
+        'host': request.host
+    }) 

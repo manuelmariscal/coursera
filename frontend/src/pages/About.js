@@ -14,7 +14,7 @@ const About = () => {
           <h2>Nuestra Historia</h2>
           <p>
             MotoSegura nació de la necesidad de proporcionar una solución eficaz ante emergencias médicas 
-            que pueden sufrir los motociclistas. Fundada en 2023, nuestra plataforma combina 
+            que pueden sufrir los motociclistas. Fundada en 2025, nuestra plataforma combina 
             tecnología QR con fichas médicas digitales para proporcionar acceso rápido a 
             información vital en caso de accidentes, facilitando la atención médica oportuna.
           </p>
@@ -35,17 +35,17 @@ const About = () => {
           <div className="team-grid">
             <div className="team-member">
               <div className="member-avatar">👨‍⚕️</div>
-              <h3>Juan Pérez</h3>
-              <p>Fundador & Médico Especialista</p>
+              <h3>Elena Mariscal</h3>
+              <p>Fundadora & CEO</p>
             </div>
             <div className="team-member">
               <div className="member-avatar">👩‍💻</div>
-              <h3>María López</h3>
-              <p>CTO & Desarrolladora</p>
+              <h3>Víctor Manuel Mariscal</h3>
+              <p>CTO & Desarrollador</p>
             </div>
             <div className="team-member">
               <div className="member-avatar">👨‍💼</div>
-              <h3>Carlos Rodríguez</h3>
+              <h3>Máximo Décimo Meridio</h3>
               <p>Director de Operaciones</p>
             </div>
           </div>

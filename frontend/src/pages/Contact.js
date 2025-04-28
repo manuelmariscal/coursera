@@ -71,7 +71,7 @@ const Contact = () => {
             <div className="info-icon">✉️</div>
             <div className="info-text">
               <h3>Email</h3>
-              <p>soporte@motosegura.com</p>
+              <p>soporte@motosegura.online</p>
             </div>
           </div>
           <div className="info-item">

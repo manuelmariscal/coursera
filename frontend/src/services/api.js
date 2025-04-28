@@ -1,15 +1,128 @@
 import axios from 'axios';
 
+// Determinar la URL base del API dependiendo del entorno
+let apiBaseUrl;
+
+// Detectar si se está ejecutando en un dispositivo móvil
+const isMobileDevice = () => {
+  const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+  return /android|iPad|iPhone|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+};
+
+// Determinar la URL base del backend
+if (process.env.REACT_APP_BACKEND_URL) {
+  // Usar la URL explícitamente configurada (útil para ngrok)
+  apiBaseUrl = process.env.REACT_APP_BACKEND_URL;
+  console.log('Usando URL del backend configurada:', apiBaseUrl);
+} else if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+  // Cuando se ejecuta desde un dominio externo, usar el mismo origen para el backend
+  // Esto es crucial para que funcione correctamente en dispositivos móviles
+  if (isMobileDevice()) {
+    // En dispositivos móviles, usamos la misma URL base (pero sin puerto específico)
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    apiBaseUrl = `${protocol}//${hostname}`;
+    
+    // Si estamos usando un puerto para el backend, añadirlo
+    if (process.env.REACT_APP_BACKEND_PORT) {
+      apiBaseUrl += `:${process.env.REACT_APP_BACKEND_PORT}`;
+    }
+    console.log('Dispositivo móvil detectado, usando URL:', apiBaseUrl);
+  } else {
+    // En navegadores de escritorio, podemos usar el puerto específico
+    if (process.env.REACT_APP_BACKEND_PORT) {
+      apiBaseUrl = window.location.origin.replace(/:\d+$/, `:${process.env.REACT_APP_BACKEND_PORT}`);
+    } else {
+      apiBaseUrl = window.location.origin;
+    }
+    console.log('Detectada URL no-local, usando:', apiBaseUrl);
+  }
+} else {
+  // En desarrollo local, usa el proxy configurado en package.json o localhost por defecto
+  apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  console.log('Usando URL del backend local:', apiBaseUrl);
+}
+
+// Aumentar timeout para dispositivos móviles
+const defaultTimeout = isMobileDevice() ? 30000 : 15000;
+
 // Create an axios instance with default config
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000',
+  baseURL: apiBaseUrl,
   headers: {
     'Content-Type': 'application/json',
   },
+  // Aumentar el timeout para permitir conexiones más lentas en redes públicas
+  timeout: defaultTimeout,
+  // Permitir cookies y credenciales para CORS
+  withCredentials: true
 });
+
+// Interceptor para logs y diagnóstico
+api.interceptors.request.use(
+  (config) => {
+    console.log(`[API] Llamada a ${config.method.toUpperCase()} ${config.url}`);
+    
+    // Para dispositivos móviles, añadir encabezados especiales
+    if (isMobileDevice()) {
+      config.headers['X-Mobile-Device'] = 'true';
+    }
+    
+    return config;
+  },
+  (error) => {
+    console.error('[API] Error en la solicitud:', error);
+    return Promise.reject(error);
+  }
+);
+
+api.interceptors.response.use(
+  (response) => {
+    console.log(`[API] Respuesta ${response.status} de ${response.config.url}:`, response.data);
+    return response;
+  },
+  (error) => {
+    if (error.response) {
+      // El servidor respondió con un código de estado diferente de 2xx
+      console.error(`[API] Error ${error.response.status} en ${error.config.url}:`, error.response.data);
+      
+      // Manejo específico para límite de solicitudes excedido
+      if (error.response.status === 429) {
+        const resetTime = error.response.data.reset;
+        let waitMessage = "Por favor, espere antes de intentar nuevamente.";
+        
+        if (resetTime) {
+          const resetDate = new Date(resetTime);
+          const waitSeconds = Math.ceil((resetDate - new Date()) / 1000);
+          waitMessage = `Por favor, espere ${waitSeconds} segundos antes de intentar nuevamente.`;
+        }
+        
+        error.message = `Límite de solicitudes excedido. ${waitMessage}`;
+        console.warn('[API] Rate limit excedido:', error.message);
+      }
+    } else if (error.request) {
+      // La solicitud se hizo pero no se recibió respuesta
+      console.error('[API] No se recibió respuesta del servidor:', error.request);
+    } else {
+      // Error al configurar la solicitud
+      console.error('[API] Error de configuración:', error.message);
+    }
+    return Promise.reject(error);
+  }
+);
 
 // API functions for different endpoints
 export const ApiService = {
+  // Función para obtener la URL base configurada (útil para diagnóstico)
+  getBaseUrl: () => {
+    return apiBaseUrl;
+  },
+  
+  // Verificar si es un dispositivo móvil
+  isMobileDevice: () => {
+    return isMobileDevice();
+  },
+
   // Health check
   checkHealth: async () => {
     try {
@@ -35,18 +148,50 @@ export const ApiService = {
   // Fichas Médicas
   getAllFichas: async () => {
     try {
+      // Intentar obtener las fichas
+      console.log('Obteniendo fichas médicas...');
       const response = await api.get('/api/fichas');
-      return response.data.fichas;
+      
+      // Validar la respuesta
+      if (response.data && Array.isArray(response.data.fichas)) {
+        console.log(`Fichas obtenidas exitosamente: ${response.data.fichas.length}`);
+        return response.data.fichas;
+      } else {
+        console.error('Respuesta inválida de getAllFichas:', response.data);
+        
+        // Intentar parsear la respuesta por si viene en un formato diferente
+        if (response.data && typeof response.data === 'object') {
+          if (response.data.status === 'success' && Array.isArray(response.data.fichas)) {
+            return response.data.fichas;
+          }
+        }
+        
+        throw new Error('La respuesta del servidor no tiene el formato esperado');
+      }
     } catch (error) {
       console.error('Error getting fichas médicas:', error);
-      throw error;
+      // Reenviar el error pero con contexto adicional
+      if (error.message === 'La respuesta del servidor no tiene el formato esperado') {
+        throw error;
+      } else {
+        throw new Error(`Error al cargar las fichas médicas: ${error.message}`);
+      }
     }
   },
 
   getFichaById: async (fichaId) => {
     try {
       const response = await api.get(`/api/fichas/${fichaId}`);
-      return response.data.ficha;
+      
+      // Validar la respuesta
+      if (response.data && response.data.ficha) {
+        return response.data.ficha;
+      } else if (response.data && response.data.status === 'success' && response.data.ficha) {
+        return response.data.ficha;
+      } else {
+        console.error(`Respuesta inválida de getFichaById para ID ${fichaId}:`, response.data);
+        throw new Error('La respuesta del servidor no tiene el formato esperado');
+      }
     } catch (error) {
       console.error(`Error getting ficha médica ${fichaId}:`, error);
       throw error;
@@ -56,7 +201,16 @@ export const ApiService = {
   createFicha: async (fichaData) => {
     try {
       const response = await api.post('/api/fichas', fichaData);
-      return response.data;
+      
+      // Validar la respuesta
+      if (response.data && response.data.ficha) {
+        return response.data;
+      } else if (response.data && response.data.status === 'success' && response.data.ficha) {
+        return response.data;
+      } else {
+        console.error('Respuesta inválida de createFicha:', response.data);
+        throw new Error('La respuesta del servidor no tiene el formato esperado');
+      }
     } catch (error) {
       console.error('Error creating ficha médica:', error);
       throw error;
@@ -75,14 +229,82 @@ export const ApiService = {
 
   deleteFicha: async (fichaId, apiKey) => {
     try {
+      console.log(`Intentando eliminar ficha ${fichaId} con apiKey: ${apiKey ? '(apiKey provista)' : 'NO PROVISTA'}`);
+      
+      // Asegurarse de que el apiKey esté presente
+      if (!apiKey) {
+        console.error('Error al eliminar: API key no proporcionada');
+        throw new Error('Se requiere una API key para eliminar fichas');
+      }
+      
       const response = await api.delete(`/api/fichas/${fichaId}`, {
         headers: {
           'X-API-Key': apiKey
         }
       });
+      
+      console.log('Respuesta de eliminación:', response.data);
       return response.data;
     } catch (error) {
       console.error(`Error deleting ficha médica ${fichaId}:`, error);
+      
+      // Proporcionar más detalles sobre el error para depuración
+      if (error.response) {
+        console.error(`Código de estado: ${error.response.status}`);
+        console.error('Datos de la respuesta:', error.response.data);
+        
+        // Si es un error 403, dar un mensaje más específico
+        if (error.response.status === 403) {
+          throw new Error('Acceso denegado: API key inválida o faltante');
+        }
+      }
+      
+      throw error;
+    }
+  },
+
+  // Función para eliminar múltiples fichas médicas
+  deleteManyFichas: async (fichaIds, apiKey) => {
+    try {
+      console.log(`Intentando eliminar ${fichaIds.length} fichas con apiKey: ${apiKey ? '(apiKey provista)' : 'NO PROVISTA'}`);
+      
+      // Asegurarse de que el apiKey esté presente
+      if (!apiKey) {
+        console.error('Error al eliminar: API key no proporcionada');
+        throw new Error('Se requiere una API key para eliminar fichas');
+      }
+      
+      const deletePromises = fichaIds.map(id => 
+        api.delete(`/api/fichas/${id}`, {
+          headers: {
+            'X-API-Key': apiKey
+          }
+        })
+      );
+      
+      const results = await Promise.allSettled(deletePromises);
+      
+      // Procesar resultados
+      const successful = results
+        .filter(result => result.status === 'fulfilled')
+        .map(result => result.value.data);
+      
+      const failed = results
+        .filter(result => result.status === 'rejected')
+        .map((result, index) => ({
+          id: fichaIds[index],
+          error: result.reason.message,
+          status: result.reason.response?.status
+        }));
+      
+      return {
+        status: failed.length === 0 ? "success" : "partial",
+        message: `${successful.length} fichas eliminadas, ${failed.length} fallidas`,
+        successful,
+        failed
+      };
+    } catch (error) {
+      console.error(`Error deleting multiple fichas:`, error);
       throw error;
     }
   },
@@ -90,7 +312,14 @@ export const ApiService = {
   searchFichas: async (params) => {
     try {
       const response = await api.get('/api/buscar/fichas', { params });
-      return response.data.fichas;
+      
+      // Validar la respuesta
+      if (response.data && Array.isArray(response.data.fichas)) {
+        return response.data.fichas;
+      } else {
+        console.error('Respuesta inválida de searchFichas:', response.data);
+        throw new Error('La respuesta del servidor no tiene el formato esperado');
+      }
     } catch (error) {
       console.error('Error searching fichas médicas:', error);
       throw error;
@@ -99,7 +328,7 @@ export const ApiService = {
 
   getQRCode: (fichaId) => {
     // Esta URL devuelve directamente la imagen del QR
-    return `${api.defaults.baseURL}/api/qr/${fichaId}`;
+    return `${apiBaseUrl}/api/qr/${fichaId}`;
   },
 
   uploadPhoto: async (fichaId, photoFile) => {
@@ -107,14 +336,19 @@ export const ApiService = {
       const formData = new FormData();
       formData.append('file', photoFile);
       
+      // Añadir encabezado para indicar si es un dispositivo móvil
+      const headers = {
+        'Content-Type': 'multipart/form-data'
+      };
+      
+      if (isMobileDevice()) {
+        headers['X-Mobile-Device'] = 'true';
+      }
+      
       const response = await axios.post(
-        `${api.defaults.baseURL}/api/upload_photo/${fichaId}`, 
+        `${apiBaseUrl}/api/upload_photo/${fichaId}`, 
         formData, 
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        }
+        { headers }
       );
       
       return response.data;
