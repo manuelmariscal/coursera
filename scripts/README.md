@@ -4,7 +4,7 @@ This directory contains all the scripts needed for setting up, deploying, backin
 
 ## Directory Structure
 
-```
+```bash
 scripts/
 ├── backup/             # Backup and restore scripts
 │   ├── backup.sh       # Script for creating backups
