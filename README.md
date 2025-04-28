@@ -44,7 +44,7 @@ Los administradores pueden gestionar todas las fichas médicas, mientras que los
 
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/tu-usuario/motosegura.git
+git clone https://github.com/manuelmariscal/motosegura.git
 cd motosegura
 
 # 2. Ejecutar el script de configuración automatizado
@@ -58,7 +58,7 @@ Si prefieres configurar cada componente por separado:
 
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/tu-usuario/motosegura.git
+git clone https://github.com/manuelmariscal/motosegura.git
 cd motosegura
 
 # 2. Configurar la base de datos
@@ -79,7 +79,7 @@ cd motosegura
 #### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/tu-usuario/motosegura.git
+git clone https://github.com/manuelmariscal/motosegura.git
 cd motosegura
 ```
 
