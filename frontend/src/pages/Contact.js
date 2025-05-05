@@ -57,28 +57,28 @@ const Contact = () => {
             <div className="info-icon">📍</div>
             <div className="info-text">
               <h3>Dirección</h3>
-              <p>Av. Salud 123, Distrito Médico Central</p>
+              <p>Enrique Díaz de León #205, Arboledas, 46616 Ameca, Jal.</p>
             </div>
           </div>
           <div className="info-item">
             <div className="info-icon">📞</div>
             <div className="info-text">
               <h3>Teléfono</h3>
-              <p>+57 300 123 4567</p>
-            </div>
+              <p>+52 33 2614 9249</p>
+            </div> 
           </div>
           <div className="info-item">
             <div className="info-icon">✉️</div>
             <div className="info-text">
               <h3>Email</h3>
-              <p>soporte@motosegura.online</p>
+              <p>contacto@motosegura.online</p>
             </div>
           </div>
           <div className="info-item">
             <div className="info-icon">🏥</div>
             <div className="info-text">
               <h3>Emergencias</h3>
-              <p>Línea 24/7: +57 300 765 4321</p>
+              <p>Línea 24/7: +52 33 2614 9249</p>
             </div>
           </div>
         </div>

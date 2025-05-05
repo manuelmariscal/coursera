@@ -35,18 +35,18 @@ const About = () => {
           <div className="team-grid">
             <div className="team-member">
               <div className="member-avatar">👨‍⚕️</div>
-              <h3>Elena Mariscal</h3>
-              <p>Fundadora & CEO</p>
+              <h3>Elena Bernardette Mariscal Cervantes</h3>
+              <p>Participante Reto STEM</p>
             </div>
             <div className="team-member">
               <div className="member-avatar">👩‍💻</div>
-              <h3>Víctor Manuel Mariscal</h3>
-              <p>CTO & Desarrollador</p>
+              <h3>Karla Samantha Sànchez Torres</h3>
+              <p>Participante Reto STEM</p>
             </div>
             <div className="team-member">
               <div className="member-avatar">👨‍💼</div>
-              <h3>Máximo Décimo Meridio</h3>
-              <p>Director de Operaciones</p>
+              <h3>Nicole Monserrat Prado Figueroa</h3>
+              <p>Participante Reto STEM</p>
             </div>
           </div>
         </div>
