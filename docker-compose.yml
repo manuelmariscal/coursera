@@ -13,22 +13,17 @@ services:
       - motosegura-network
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
     ports:
       - "3000:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
     depends_on:
       - web
-    environment:
-      - REACT_APP_API_URL=http://localhost:5000
+    restart: always
     networks:
       - motosegura-network
 
-volumes:
-  uploads:
-
 networks:
   motosegura-network:
-    driver: bridge 
+    driver: bridge

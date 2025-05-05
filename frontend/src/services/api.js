@@ -1,47 +1,15 @@
 import axios from 'axios';
 
-// Determinar la URL base del API dependiendo del entorno
-let apiBaseUrl;
-
 // Detectar si se está ejecutando en un dispositivo móvil
 const isMobileDevice = () => {
   const userAgent = navigator.userAgent || navigator.vendor || window.opera;
   return /android|iPad|iPhone|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
 };
 
-// Determinar la URL base del backend
-if (process.env.REACT_APP_BACKEND_URL) {
-  // Usar la URL explícitamente configurada (útil para ngrok)
-  apiBaseUrl = process.env.REACT_APP_BACKEND_URL;
-  console.log('Usando URL del backend configurada:', apiBaseUrl);
-} else if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-  // Cuando se ejecuta desde un dominio externo, usar el mismo origen para el backend
-  // Esto es crucial para que funcione correctamente en dispositivos móviles
-  if (isMobileDevice()) {
-    // En dispositivos móviles, usamos la misma URL base (pero sin puerto específico)
-    const protocol = window.location.protocol;
-    const hostname = window.location.hostname;
-    apiBaseUrl = `${protocol}//${hostname}`;
-    
-    // Si estamos usando un puerto para el backend, añadirlo
-    if (process.env.REACT_APP_BACKEND_PORT) {
-      apiBaseUrl += `:${process.env.REACT_APP_BACKEND_PORT}`;
-    }
-    console.log('Dispositivo móvil detectado, usando URL:', apiBaseUrl);
-  } else {
-    // En navegadores de escritorio, podemos usar el puerto específico
-    if (process.env.REACT_APP_BACKEND_PORT) {
-      apiBaseUrl = window.location.origin.replace(/:\d+$/, `:${process.env.REACT_APP_BACKEND_PORT}`);
-    } else {
-      apiBaseUrl = window.location.origin;
-    }
-    console.log('Detectada URL no-local, usando:', apiBaseUrl);
-  }
-} else {
-  // En desarrollo local, usa el proxy configurado en package.json o localhost por defecto
-  apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-  console.log('Usando URL del backend local:', apiBaseUrl);
-}
+// URL base del backend configurada por variable de entorno o predeterminada
+const apiBaseUrl = process.env.REACT_APP_BACKEND_URL || 'https://api.motosegura.online';
+console.log('URL base del backend:', apiBaseUrl);
+
 
 // Aumentar timeout para dispositivos móviles
 const defaultTimeout = isMobileDevice() ? 30000 : 15000;
