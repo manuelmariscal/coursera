@@ -339,7 +339,7 @@ def add_ficha():
         "status": "success", 
         "message": "Ficha médica registrada con éxito", 
         "ficha": nueva_ficha.to_dict(),
-        "qr_url": f"/api/qr/{nuevo_id}"
+        "qr_url": f"/fichas/{nuevo_id}"
     }), 201
 
 @app.route('/api/fichas/<ficha_id>', methods=['PUT'])

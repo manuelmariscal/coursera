@@ -11,7 +11,7 @@ const Footer = () => {
         <div className="footer-content">
           <div className="footer-section">
             <h3>MotoSegura</h3>
-            <p>Protección avanzada para tu motocicleta con tecnología QR</p>
+            <p>Protección de emergencia avanzada para ti con tecnología QR</p>
           </div>
           
           <div className="footer-section">
@@ -25,10 +25,12 @@ const Footer = () => {
           
           <div className="footer-section">
             <h3>Contacto</h3>
-            <p>Email: contacto@motosegura.com</p>
-            <p>Teléfono: +123 456 7890</p>
+            <p>Email: contacto@motosegura.online</p>
+            <p>Instagram: @motoseguraameca.online</p>
           </div>
         </div>
+
+        
         
         <div className="footer-bottom">
           <p>&copy; {currentYear} MotoSegura. Todos los derechos reservados.</p>

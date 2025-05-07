@@ -61,13 +61,6 @@ const Contact = () => {
             </div>
           </div>
           <div className="info-item">
-            <div className="info-icon">📞</div>
-            <div className="info-text">
-              <h3>Teléfono</h3>
-              <p>+52 33 2614 9249</p>
-            </div> 
-          </div>
-          <div className="info-item">
             <div className="info-icon">✉️</div>
             <div className="info-text">
               <h3>Email</h3>
@@ -78,64 +71,9 @@ const Contact = () => {
             <div className="info-icon">🏥</div>
             <div className="info-text">
               <h3>Emergencias</h3>
-              <p>Línea 24/7: +52 33 2614 9249</p>
+              <p>Línea 24/7: 911</p>
             </div>
           </div>
-        </div>
-
-        <div className="contact-form">
-          <h2>Envíenos un mensaje</h2>
-          {formStatus.submitted && formStatus.success ? (
-            <div className="success-message">{formStatus.message}</div>
-          ) : (
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label htmlFor="name">Nombre</label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="email">Email</label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="subject">Asunto</label>
-                <input
-                  type="text"
-                  id="subject"
-                  name="subject"
-                  value={formData.subject}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="message">Mensaje</label>
-                <textarea
-                  id="message"
-                  name="message"
-                  value={formData.message}
-                  onChange={handleChange}
-                  required
-                  rows="5"
-                ></textarea>
-              </div>
-              <button type="submit" className="submit-button">Enviar Mensaje</button>
-            </form>
-          )}
         </div>
       </div>
     </div>

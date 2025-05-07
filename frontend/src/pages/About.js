@@ -36,17 +36,17 @@ const About = () => {
             <div className="team-member">
               <div className="member-avatar">👨‍⚕️</div>
               <h3>Elena Bernardette Mariscal Cervantes</h3>
-              <p>Participante Reto STEM</p>
+              <p>Participante Reto STEAM</p>
             </div>
             <div className="team-member">
               <div className="member-avatar">👩‍💻</div>
               <h3>Karla Samantha Sànchez Torres</h3>
-              <p>Participante Reto STEM</p>
+              <p>Participante Reto STEAM</p>
             </div>
             <div className="team-member">
               <div className="member-avatar">👨‍💼</div>
               <h3>Nicole Monserrat Prado Figueroa</h3>
-              <p>Participante Reto STEM</p>
+              <p>Participante Reto STEAM</p>
             </div>
           </div>
         </div>
