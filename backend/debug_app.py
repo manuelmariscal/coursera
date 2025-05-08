@@ -420,7 +420,7 @@ def generate_qr(ficha_id):
         abort(404, description="Ficha médica no encontrada")
     
     # Crear la URL completa a la que apuntará el QR (frontend)
-    qr_data = f"{request.host_url}ficha/{ficha_id}"
+    qr_data = f"motosegura.online/ficha/{ficha_id}"
     
     # Generar el código QR
     qr = qrcode.QRCode(
