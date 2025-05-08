@@ -1,91 +1,85 @@
-# Guion de Presentación: Proceso de Desarrollo de MotoSegura
-
-## 1. Introducción
-
-MotoSegura es un sistema digital que permite almacenar y consultar información médica esencial de manera rápida y segura, especialmente pensado para situaciones de emergencia. El proyecto fue desarrollado por estudiantes de preparatoria como parte de un reto STEAM.
+### Guion de Presentación
 
 ---
 
-## 2. ¿Cómo se desarrolló el proyecto?
+#### 1. ¿Qué es MotoSegura?
 
-### a) Planeación y Diseño
-- **Identificación del problema:** Se detectó la necesidad de que motociclistas y personas en riesgo puedan tener su información médica accesible en caso de accidente.
-- **Definición de funcionalidades:** Se decidió que el sistema debía permitir crear, consultar, editar y eliminar fichas médicas, así como generar códigos QR para acceso rápido.
-- **Diseño de la experiencia de usuario:** Se realizaron bocetos y diagramas para visualizar cómo sería la aplicación tanto en computadoras como en celulares.
-- **Asesoría externa:** Para la parte de desarrollo y elección del tech stack, el equipo fue asesorado por un maestro externo, quien fue guiando el proceso de diseño y de desarrollo, ayudando a tomar decisiones técnicas y a resolver dudas durante el proyecto.
-- **Herramientas de GenAI:** Además, se utilizaron herramientas de Inteligencia Artificial Generativa (GenAI) para la creación de código, resolución de problemas y mejoras en el desarrollo, lo que permitió acelerar el proceso y encontrar soluciones innovadoras. Las herraminetas mayormente utilizadas fueron las plataformas de OpenAI (ChatGPT) y Claude.
-- **Dominio propio y despliegue en Raspberry Pi:** Se compró un dominio web, el cual fue bastante económico, para poder montar la página correctamente y facilitar el acceso a los usuarios. Además, el aplicativo está montado y funcionando en una Raspberry Pi, lo que demuestra que el sistema puede operar en hardware accesible y de bajo costo.
-
-### b) Elección de Tecnologías (Tech Stack)
-- **Frontend (Interfaz de usuario):**
-  - **React.js:** Permite crear páginas web interactivas y rápidas. Se usó para construir la parte visual que ven los usuarios.
-  - **React Router:** Permite navegar entre diferentes páginas de la aplicación sin recargar la web.
-  - **Bootstrap:** Biblioteca de estilos para que la aplicación se vea moderna y sea fácil de usar.
-  - **Axios:** Herramienta para que la aplicación pueda comunicarse con el servidor y obtener o enviar datos.
-
-- **Backend (Servidor y lógica):**
-  - **Python + Flask:** Flask es un "mini-servidor" que recibe las peticiones de la app, procesa la información y responde. Se usó para crear la API que maneja las fichas médicas.
-  - **SQLite (desarrollo) / PostgreSQL (producción):** Bases de datos donde se guarda la información médica y de usuarios.
-  - **Docker:** Permite que todo el sistema se pueda instalar y ejecutar fácilmente en cualquier computadora, sin importar el sistema operativo.
-  - **Cloudflare Tunnels:** Permite que la aplicación sea accesible desde cualquier lugar de internet, de forma segura.
-
-### c) Desarrollo de Funcionalidades
-
-1. **Creación de la base de datos:**
-   - Se diseñó una estructura para guardar la información médica y de usuarios.
-2. **Desarrollo del backend:**
-   - Se programaron rutas para crear, consultar, editar y eliminar fichas médicas.
-   - Se implementó la generación de códigos QR para cada ficha.
-   - Se agregaron medidas de seguridad como límites de solicitudes y autenticación.
-3. **Desarrollo del frontend:**
-   - Se crearon páginas para que los usuarios puedan ver y registrar sus fichas.
-   - Se agregó la funcionalidad para escanear y mostrar información usando QR.
-   - Se diseñó la interfaz para que sea fácil de usar en computadoras y celulares.
-4. **Pruebas y ajustes:**
-   - Se probaron todas las funciones en diferentes dispositivos.
-   - Se corrigieron errores y se mejoró la experiencia de usuario.
-
-### d) Seguridad y Buenas Prácticas
-- **Rate Limiting:** Limita la cantidad de veces que un usuario puede hacer peticiones para evitar abusos.
-- **Autenticación:** Solo usuarios registrados pueden modificar o eliminar información.
-- **Validación de datos:** Se revisa que la información ingresada sea correcta y segura.
-
-### e) Despliegue y Uso
-- Se prepararon scripts para instalar y poner en marcha el sistema fácilmente.
-- Se documentó el proceso para que cualquier persona pueda instalarlo y usarlo.
+MotoSegura es como una “tarjeta médica digital” que vive en tu celular. Guarda tu tipo de sangre, alergias y teléfonos de emergencia. Si te accidentas, alguien escanea tu código QR y ve esos datos al instante, sin instalar nada.
 
 ---
 
-## 3. ¿Cómo funciona MotoSegura?
+#### 2. Pasos para construirlo
 
-1. **Registro de Fichas Médicas:**
-   - Un usuario ingresa sus datos médicos y de contacto en la aplicación.
-   - La información se guarda de forma segura en la base de datos.
-2. **Generación de Código QR:**
-   - Por cada ficha médica, se genera un código QR único.
-   - Este QR puede ser impreso o guardado en el celular.
-3. **Consulta en Emergencias:**
-   - En caso de accidente, cualquier persona puede escanear el QR y ver la información médica esencial, incluso desde un celular.
-4. **Administración:**
-   - Los administradores pueden gestionar todas las fichas, eliminar registros y mantener el sistema seguro.
+1. **Detectar el problema**
+
+   * Muchos motociclistas no llevan su información médica a la mano.
+2. **Dibujar la idea**
+
+   * Hicimos bocetos en papel de cómo se verían las pantallas (como si fueran cómics sencillos).
+3. **Dividir la app en dos partes fáciles de entender**
+
+   * **Lo que se ve** (pantallas): hecho con un programa llamado **React**, que permite que la página cambie rápido sin recargar.
+   * **Lo que trabaja por dentro** (servidor): una pequeña app en **Python** llamada **Flask** que guarda y entrega los datos.
+4. **Guardar la info**
+
+   * Al principio usamos una libreta digital sencilla (SQLite). Para uso diario cambiamos a una libreta más fuerte (PostgreSQL).
+5. **Generar el QR**
+
+   * Un trozo de código crea tu QR en menos de un segundo.
+6. **Probar y corregir**
+
+   * Probamos en celulares viejos y nuevos, con internet lento y rápido.
+7. **Ponerlo en línea**
+
+   * Corre en una **Raspberry Pi 5** (una mini-computadora del tamaño de una tarjeta de crédito) en la casa del equipo.
+   * Usamos **Cloudflare Tunnel** (plan gratis) para que cualquiera pueda entrar desde internet.
+
+---
+
+#### 3. ¿Cómo lo usa un motociclista?
+
+1. **Registro** – Escribe sus datos y la app genera su QR.
+2. **Impresión** – Imprime la etiqueta y la pega en el casco o la moto.
+3. **Accidente** – Cualquiera escanea el QR y ve solo la información vital.
+4. **Actualización** – Si cambian sus datos, entra con su contraseña y edita; el QR sigue sirviendo.
 
 ---
 
-## 4. Explicación de cada tecnología
+#### 4. Seguridad explicada fácil
 
-- **React.js:** Permite crear interfaces de usuario modernas y reactivas. Cada vez que el usuario interactúa, la página responde sin recargar.
-- **Flask:** Es un servidor ligero en Python que recibe las peticiones de la app, procesa la lógica y responde con datos.
-- **SQLite/PostgreSQL:** Son bases de datos que almacenan la información. SQLite es simple y se usa para pruebas; PostgreSQL es más robusto y se usa en producción.
-- **Docker:** Empaqueta toda la aplicación para que funcione igual en cualquier computadora.
-- **Cloudflare Tunnels:** Hace que la aplicación sea accesible desde internet de forma segura, sin exponer directamente la computadora.
-- **Bootstrap:** Da estilos y componentes visuales listos para usar, haciendo que la app se vea profesional.
-- **Axios:** Permite que el frontend (lo que ve el usuario) se comunique con el backend (el servidor).
+* **Límite de peticiones**: evita que alguien “spamee” el servidor.
+* **Contraseña + token**: solo el dueño puede cambiar sus datos.
+* **Revisión de datos**: la app no deja meter código raro que pueda dañar el sistema.
+* **Respaldos diarios**: cada noche se guarda una copia cifrada por si la mini-PC falla.
 
 ---
 
-## 5. Conclusión
+#### 5. Presupuesto total
 
-MotoSegura es el resultado de un proceso colaborativo, donde se aplicaron tecnologías modernas para resolver un problema real. El sistema es fácil de usar, seguro y accesible desde cualquier lugar, ayudando a salvar vidas en situaciones de emergencia.
+| Concepto                          |                        Costo (MXN) | Fuente                |
+| --------------------------------- | ---------------------------------: | --------------------- |
+| Dominio .com.mx (1 año)           |                          **\$ 40** | dato dado             |
+| Raspberry Pi 4 (4 GB)             |                       **\$ 1 738** | ([Amazon México][1])  |
+| Memoria micro-SD 32 GB            |                         **\$ 132** | ([Mercado Libre][2])  |
+| Fuente oficial 27 W               |                         **\$ 449** | ([Mercado Libre][3])  |
+| Gabinete con ventilador           |                         **\$ 296** | ([Mercado Libre][4])  |
+| 100 etiquetas de vinil 5 cm       |                         **\$ 214** | ([Mercado Libre][5])  |
+| Electricidad 1 año (5 W las 24 h) | **\$ 47** (44 kWh × \$1.063 / kWh) | ([PRECIOS MÉXICO][6]) |
+| Misceláneos (cables, respaldo SD) |                         **\$ 200** | estimado              |
+| **Total aproximado**              |                       **\$ 3 116** | —                     |
+
+*Los precios son de mayo 2025 y pueden variar.*
 
 ---
+
+#### 6. Próximos pasos
+
+* Pedir a paramédicos reales que prueben el sistema y den retroalimentación.
+* Añadir chip **NFC** para que la información también salga con solo acercar el casco al teléfono.
+
+---
+
+#### 7. Cierre
+
+Con menos de **4 000 pesos** y herramientas que cualquiera puede aprender en la prepa, MotoSegura demuestra que la tecnología sencilla puede salvar vidas. ¡Gracias por escuchar y manejar con cuidado!
 
