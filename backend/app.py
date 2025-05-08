@@ -20,6 +20,7 @@ from flask_limiter.util import get_remote_address
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
+import requests
 
 # Load environment variables
 load_dotenv()
@@ -69,6 +70,23 @@ UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', 'uploads')
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Function to download and save the default profile image if it doesn't exist
+def ensure_default_profile_image():
+    default_image_path = os.path.join(app.config['UPLOAD_FOLDER'], 'default.png')
+    if not os.path.exists(default_image_path):
+        print("Default profile image not found. Downloading...")
+        url = 'https://via.placeholder.com/200?text=Default+Profile'
+        response = requests.get(url, stream=True)
+        if response.status_code == 200:
+            with open(default_image_path, 'wb') as out_file:
+                out_file.write(response.content)
+            print("Default profile image downloaded and saved.")
+        else:
+            print("Failed to download default profile image.")
+
+# Call the function to ensure the default profile image exists
+ensure_default_profile_image()
 
 # Database Models
 class User(db.Model):
@@ -339,7 +357,7 @@ def add_ficha():
         "status": "success", 
         "message": "Ficha médica registrada con éxito", 
         "ficha": nueva_ficha.to_dict(),
-        "qr_url": f"/api/qr/{nuevo_id}"
+        "qr_url": f"https://motosegura.online/fichas/{nuevo_id}"
     }), 201
 
 @app.route('/api/fichas/<ficha_id>', methods=['PUT'])
@@ -418,10 +436,10 @@ def generate_qr(ficha_id):
     ficha = FichaMedica.query.get(ficha_id)
     if not ficha:
         abort(404, description="Ficha médica no encontrada")
-    
+
     # Crear la URL completa a la que apuntará el QR (frontend)
-    qr_data = f"{request.host_url}ficha/{ficha_id}"
-    
+    qr_data = f"https://motosegura.online/fichas/{ficha_id}"
+
     # Generar el código QR
     qr = qrcode.QRCode(
         version=1,
@@ -431,14 +449,14 @@ def generate_qr(ficha_id):
     )
     qr.add_data(qr_data)
     qr.make(fit=True)
-    
+
     img = qr.make_image(fill_color="black", back_color="white")
-    
+
     # Convertir la imagen a bytes para enviarla
     img_io = BytesIO()
     img.save(img_io, 'PNG')
     img_io.seek(0)
-    
+
     return send_file(img_io, mimetype='image/png')
 
 @app.route('/api/upload_photo/<ficha_id>', methods=['POST'])
@@ -517,4 +535,4 @@ if __name__ == '__main__':
     # Inicializar la base de datos antes de ejecutar la aplicación
     init_db()
     
-    app.run(host=HOST, port=PORT, debug=DEBUG_MODE) 
+    app.run(host=HOST, port=PORT, debug=DEBUG_MODE)

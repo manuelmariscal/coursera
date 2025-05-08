@@ -304,9 +304,41 @@ const MedicalRecords = () => {
   // Manejo del formulario
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+
+    // Validar que no se usen emojis ni caracteres especiales
+    const regex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/; // Solo letras, espacios y caracteres acentuados
+    if (name === 'nombre' || name === 'apellido' || name === 'contacto_emergencia') {
+      if (!regex.test(value)) {
+        setError('Solo se permiten letras y espacios. No se permiten emojis ni caracteres especiales.');
+        return;
+      } else {
+        setError(null);
+      }
+    }
+
+    // Validar que el número de contacto tenga exactamente 10 dígitos
+    if (name === 'numero_contacto') {
+      const phoneRegex = /^\d{0,10}$/; // Permitir hasta 10 dígitos
+      if (!phoneRegex.test(value)) {
+        setError('El número de contacto debe contener exactamente 10 dígitos.');
+        return;
+      } else {
+        setError(null);
+      }
+    }
+
+    // Capitalizar automáticamente la primera letra de cada palabra
+    const capitalizeWords = (text) => {
+      return text
+        .toLowerCase()
+        .replace(/\b\w/g, (char) => char.toUpperCase());
+    };
+
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: name === 'nombre' || name === 'apellido' || name === 'contacto_emergencia'
+        ? capitalizeWords(value)
+        : value,
     }));
   };
 
@@ -330,28 +362,35 @@ const MedicalRecords = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
+    // Validar que todos los campos requeridos estén completos
+    if (!formData.nombre || !formData.apellido || !formData.numero_contacto) {
+      setError('Por favor, complete todos los campos obligatorios.');
+      return;
+    }
+
+    // Validar que el número de contacto tenga exactamente 10 dígitos
+    if (formData.numero_contacto.length !== 10) {
+      setError('El número de contacto debe contener exactamente 10 dígitos.');
+      return;
+    }
+
     try {
-      // Create a copy of the form data with formatted phone number
       const formattedData = {
         ...formData,
-        numero_contacto: `${formData.codigo_pais} ${formData.numero_contacto}`
+        numero_contacto: `${formData.codigo_pais} ${formData.numero_contacto}`,
       };
-      
+
       const response = await ApiService.createFicha(formattedData);
       if (response && response.ficha) {
         setSuccessMessage('Ficha médica registrada con éxito - ID: ' + response.ficha.id);
-        
-        // Cerrar modal y recargar datos
         setShowModal(false);
         loadFichas();
-
-        // Redirigir a la página de vista de QR después de 2 segundos
         setTimeout(() => {
           navigate(`/ficha/${response.ficha.id}`, { state: { isNew: true } });
         }, 2000);
       } else {
-        setError('Error: La respuesta del servidor no tiene el formato esperado');
+        setError('Error: La respuesta del servidor no tiene el formato esperado.');
       }
     } catch (err) {
       setError(err.response?.data?.error || 'Error al guardar la ficha médica');
@@ -365,18 +404,12 @@ const MedicalRecords = () => {
 
   // Función para obtener la URL correcta de la imagen para cualquier dispositivo
   const getImageUrl = (ficha) => {
-    if (!ficha || !ficha.foto_url) return '/default-profile.png';
-    
-    if (ficha.foto_url === 'default_profile.png') {
-      return '/default-profile.png';
+    if (!ficha || !ficha.foto_url || ficha.foto_url === 'default.png') {
+      return 'https://via.placeholder.com/200?text=Default+Profile';
     }
-    
-    // Intentar usar la URL completa si está disponible
     if (ficha.foto_url_completa) {
       return ficha.foto_url_completa;
     }
-    
-    // Caso de fallback - construir la URL nosotros mismos
     return `${ApiService.getBaseUrl()}/uploads/${ficha.foto_url}`;
   };
   
@@ -661,7 +694,11 @@ const MedicalRecords = () => {
                     value={formData.nombre} 
                     onChange={handleChange} 
                     required 
+                    placeholder="Ingrese el nombre (solo letras)"
                   />
+                  <Form.Text className="text-muted">
+                    Solo se permiten letras y espacios. No se permiten emojis ni caracteres especiales.
+                  </Form.Text>
                 </Form.Group>
               </Col>
               <Col>
@@ -673,7 +710,11 @@ const MedicalRecords = () => {
                     value={formData.apellido} 
                     onChange={handleChange} 
                     required 
+                    placeholder="Ingrese el apellido (solo letras)"
                   />
+                  <Form.Text className="text-muted">
+                    Solo se permiten letras y espacios. No se permiten emojis ni caracteres especiales.
+                  </Form.Text>
                 </Form.Group>
               </Col>
             </Row>
@@ -736,8 +777,11 @@ const MedicalRecords = () => {
                     value={formData.numero_contacto} 
                     onChange={handleChange} 
                     required 
-                    placeholder="Número sin prefijo"
+                    placeholder="Número sin prefijo (10 dígitos)"
                   />
+                  <Form.Text className="text-muted">
+                    El número debe contener exactamente 10 dígitos.
+                  </Form.Text>
                 </Col>
               </Row>
             </Form.Group>
@@ -905,4 +949,4 @@ const MedicalRecords = () => {
   );
 };
 
-export default MedicalRecords; 
+export default MedicalRecords;

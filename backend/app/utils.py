@@ -71,12 +71,12 @@ def get_persistent_upload_folder():
 def save_profile_image(file, record_id):
     """Save profile image and return the filename"""
     if not file:
-        return 'default_profile.png'
+        return 'default.png'
     
     try:
         if not allowed_file(file.filename):
             current_app.logger.warning(f"Invalid file type: {file.filename}")
-            return 'default_profile.png'
+            return 'default.png'
         
         # Asegurar que el nombre del archivo sea seguro
         original_filename = secure_filename(file.filename)
@@ -111,7 +111,7 @@ def save_profile_image(file, record_id):
                 current_app.logger.info(f"Saved profile image: {filename}")
             except Exception as e:
                 current_app.logger.error(f"Invalid image file: {str(e)}")
-                return 'default_profile.png'
+                return 'default.png'
         
         # Asegurar que la imagen esté disponible en el directorio de uploads de la aplicación
         app_upload_folder = current_app.config['UPLOAD_FOLDER']
@@ -135,4 +135,4 @@ def save_profile_image(file, record_id):
         return filename
     except Exception as e:
         current_app.logger.error(f"Error saving profile image: {str(e)}")
-        return 'default_profile.png' 
+        return 'default.png'

@@ -80,7 +80,7 @@ def create_record():
         
         # Crear URL absoluta para la imagen
         image_url = None
-        if record.profile_image and record.profile_image != 'default_profile.png':
+        if record.profile_image and record.profile_image != 'default.png':
             image_url = f"{request.host_url.rstrip('/')}/uploads/{record.profile_image}"
         
         return jsonify({
@@ -240,4 +240,4 @@ def health_check():
         'referer': referer,
         'remote_addr': request.remote_addr,
         'host': request.host
-    }) 
+    })

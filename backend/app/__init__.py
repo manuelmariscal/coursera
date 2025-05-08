@@ -48,7 +48,7 @@ def create_app():
     os.makedirs(app.config['PERSISTENT_UPLOAD_FOLDER'], exist_ok=True)
     
     # Create default profile image if it doesn't exist
-    default_profile_path = os.path.join(app.config['UPLOAD_FOLDER'], 'default_profile.png')
+    default_profile_path = os.path.join(app.config['UPLOAD_FOLDER'], 'default.png')
     if not os.path.exists(default_profile_path):
         # Create a simple default image or copy from assets
         try:
@@ -86,4 +86,4 @@ def create_app():
         except Exception as e:
             app.logger.error(f"Error creating database tables: {str(e)}")
     
-    return app 
+    return app

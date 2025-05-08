@@ -15,7 +15,7 @@ class MedicalRecord(db.Model):
     emergency_contact_phone = db.Column(db.String(20), nullable=False)
     allergies = db.Column(db.Text, nullable=True)
     medications = db.Column(db.Text, nullable=True)
-    profile_image = db.Column(db.String(255), default='default_profile.png')
+    profile_image = db.Column(db.String(255), default='default.png')
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
     
@@ -49,4 +49,4 @@ class MedicalRecord(db.Model):
                 host_url = request.host_url.rstrip('/')
                 record_dict['foto_url_completa'] = f"{host_url}/uploads/{self.profile_image}"
         
-        return record_dict 
+        return record_dict

@@ -295,8 +295,8 @@ export const ApiService = {
   },
 
   getQRCode: (fichaId) => {
-    // Esta URL devuelve directamente la imagen del QR
-    return `${apiBaseUrl}/api/qr/${fichaId}`;
+    // Use the frontend URL for QR code generation
+    return `api.motosegura.online/api/qr/${fichaId}`;
   },
 
   uploadPhoto: async (fichaId, photoFile) => {
@@ -327,4 +327,4 @@ export const ApiService = {
   }
 };
 
-export default api; 
+export default api;

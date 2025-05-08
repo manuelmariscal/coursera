@@ -4,6 +4,25 @@ import { ApiService } from '../services/api';
 import { Container, Row, Col, Card, Image, Button, Alert, Spinner, Form } from 'react-bootstrap';
 import './MedicalRecord.css';
 
+// Import the apiBaseUrl from the ApiService to fix the undefined error
+const apiBaseUrl = ApiService.getBaseUrl();
+
+// Function to construct the image URL consistently
+const getImageUrl = (ficha) => {
+  if (!ficha || !ficha.foto_url || ficha.foto_url === 'default.png') {
+    return 'https://via.placeholder.com/200?text=Default+Profile';
+  }
+  if (ficha.foto_url_completa) {
+    return ficha.foto_url_completa;
+  }
+  return `${apiBaseUrl}/uploads/${ficha.foto_url}`;
+};
+
+const getQrCodeUrl = (fichaId) => {
+  // Use the backend API endpoint to fetch the QR code image
+  return `${apiBaseUrl}/api/qr/${fichaId}`;
+};
+
 const MedicalRecord = () => {
   const { id } = useParams();
   const location = useLocation();
@@ -122,9 +141,7 @@ const MedicalRecord = () => {
             <Col md={4} className="text-center mb-4">
               <div className="patient-photo-container-large">
                 <Image 
-                  src={photoPreview || (ficha.foto_url === 'default.png' 
-                    ? '/default-profile.png' 
-                    : `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}/uploads/${ficha.foto_url}`)} 
+                  src={photoPreview || getImageUrl(ficha)} 
                   alt="Foto del paciente" 
                   className="patient-photo-large" 
                   rounded
@@ -240,4 +257,4 @@ const MedicalRecord = () => {
   );
 };
 
-export default MedicalRecord; 
+export default MedicalRecord;
